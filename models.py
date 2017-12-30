@@ -52,6 +52,7 @@ class models:
         preds = tf.reshape(preds, shape=[self.batch_size, self.lstm_input_max_len])
         loss = tf.reduce_mean(tf.square(preds - targets))
 
+        # apply gradient clipping here? "This is the correct way to perform gradient clipping" lol
         opt = tf.train.AdamOptimizer(1e-3).minimize(loss)
 
         self.train_loop()
