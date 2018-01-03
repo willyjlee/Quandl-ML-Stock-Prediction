@@ -44,7 +44,8 @@ def gen_data(indices, stock_name, batch_size):
         yield table[i:i+batch_size], table[i+1:i+batch_size+1]
 
 # test
-for x, y in gen_data([1,2], 'WIKI/GOOGL', 5):
-    print('x: {}'.format(x))
-    print('y: {}'.format(y))
-    break
+if __name__ == '__main__':
+    for x, y in gen_data([1,2], 'WIKI/GOOGL', 5):
+        print('x: {}'.format(x))
+        print('y: {}'.format(y))
+        break
