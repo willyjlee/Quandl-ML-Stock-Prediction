@@ -12,8 +12,8 @@ class models:
 
         # lstm
         self.lstm_units = 30
-        self.lstm_input_max_len = 2
-        self.lstm_input_size = 2
+        self.lstm_input_max_len = 5
+        self.lstm_input_size = 5
         self.lstm_target_size = self.lstm_input_size
         self.lstm_output_size = 2 * self.lstm_units
         self.lstm_num_layers = 5
@@ -26,11 +26,12 @@ class models:
         pass
 
     # return (inps, targs) [batch_size, input_max_len, inp_size]
-    def generate_data(self):
+    # generator
+    def get_data(self, num_iter, length):
         # TODO:
-        #return np.array([1]), np.array([2])
-        test = np.random.randint(0, 20, (self.batch_size, self.lstm_input_max_len, self.lstm_input_size))
-        return test, test
+        # test = np.random.randint(0, 20, (self.batch_size, self.lstm_input_max_len, self.lstm_input_size))
+        # return test, test
+        return api.gen_data([1, 2, 3, 4, 5], length, num_iter)
 
     # runs = [opt, loss, preds]
     def train_loop(self, inps, targs, runs, num_iter, num_report):
@@ -39,8 +40,15 @@ class models:
         sess.run(tf.global_variables_initializer())
         feed_dict = dict()
 
-        for i in range(num_iter):
-            feed_dict[inps], feed_dict[targs] = self.generate_data()
+        for i, (x, y) in enumerate(self.get_data(num_iter, self.lstm_input_max_len)):
+            # ignore date now
+            x = np.delete(x, [0], axis=1)
+            y = np.delete(y, [0], axis=1)
+            # TODO: reshape... batch = 1
+            x = np.reshape(x, (1, ) + x.shape)
+            y = np.reshape(y, (1, ) + y.shape)
+
+            feed_dict[inps], feed_dict[targs] = x, y
             res = sess.run(runs, feed_dict=feed_dict) # tuple
             if i != 0 and i % num_report == 0:
                 print('Opt: {}'.format(res[0]))
@@ -79,7 +87,7 @@ class models:
         loss = tf.reduce_mean(tf.square(preds - targets))
 
         # apply gradient clipping here? "This is the correct way to perform gradient clipping" lol
-        opt = tf.train.AdamOptimizer(1e-3).minimize(loss)
+        opt = tf.train.AdamOptimizer(1e-2).minimize(loss)
 
         self.train_loop(inputs, targets, [opt, loss, preds], self.lstm_num_iter, self.lstm_num_report)
 

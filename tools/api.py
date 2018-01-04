@@ -38,14 +38,27 @@ def plot(indices, stock_name):
 
 # plot([1, 2, 3], 'WIKI/AAPL')
 
-def gen_data(indices, stock_name, batch_size):
-    table = all_fields(indices, stock_name)
-    for i in range(table.shape[0] - batch_size):
-        yield table[i:i+batch_size], table[i+1:i+batch_size+1]
+stocks = ['WIKI/FB', 'WIKI/CSCO', 'WIKI/IBM', 'WIKI/GOOGL', 'WIKI/MSFT', 'WIKI/AMZN', 'WIKI/TWTR']
+
+
+def gen_data(indices, length, num_iter):
+    np.random.shuffle(stocks)
+    for i in range(num_iter):
+        stock_name = stocks[i % len(stocks)]
+        table = all_fields(indices, stock_name).reshape(-1, 1)
+        table = np.apply_along_axis(lambda a: np.array([x for x in a[0]]), axis=1, arr=table)
+        inds = np.arange(0, table.shape[0] - length, length)
+        np.random.shuffle(inds)
+        for ind in inds:
+            yield table[ind: ind+length], table[ind+1: ind+length+1]
+
+# TODO: add transforms?
 
 # test
 if __name__ == '__main__':
-    for x, y in gen_data([1,2], 'WIKI/GOOGL', 5):
+    for x, y in gen_data([1, 2], 5, 5):
+        print(x.shape)
         print('x: {}'.format(x))
         print('y: {}'.format(y))
         break
+    plot([1], stocks[0])
