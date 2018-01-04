@@ -40,7 +40,7 @@ def plot(indices, stock_name):
 
 stocks = ['WIKI/FB', 'WIKI/CSCO', 'WIKI/IBM', 'WIKI/GOOGL', 'WIKI/MSFT', 'WIKI/AMZN', 'WIKI/TWTR']
 
-
+# TODO: non overlap instead?
 def gen_data(indices, length, num_iter):
     np.random.shuffle(stocks)
     for i in range(num_iter):
