@@ -50,11 +50,15 @@ def gen_data(indices, length, num_iter):
     stock_name = stocks[0] # stocks[i % len(stocks)]
     table = all_fields(indices, stock_name).reshape(-1, 1)
     table = np.apply_along_axis(apply(table), axis=1, arr=table)
-    inds = np.arange(0, table.shape[0] - length, length)
+    # inds = np.arange(0, table.shape[0] - length, length)
+    inds = np.arange(0, table.shape[0] - length + 1, length)
+    m = max(inds)
+    inds = np.array(list(filter(lambda n: n != m, inds)))
     for _ in range(num_iter):
         np.random.shuffle(inds)
         for ind in inds:
-            yield table[ind: ind+length], table[ind+1: ind+length+1]
+            # yield table[ind: ind+length], table[ind+1: ind+length+1]
+            yield table[ind: ind+length], table[ind+length: ind+2*length]
 
 # TODO: add transforms?
 
