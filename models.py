@@ -14,7 +14,7 @@ class models:
         # lstm
         self.lstm_units = 30
         self.lstm_input_max_len = 5
-        self.lstm_input_size = 5
+        self.lstm_input_size = 4
         self.lstm_target_size = self.lstm_input_size
         self.lstm_output_size = 2 * self.lstm_units
         self.lstm_num_layers = 5
@@ -32,7 +32,7 @@ class models:
         # TODO:
         # test = np.random.randint(0, 20, (self.batch_size, self.lstm_input_max_len, self.lstm_input_size))
         # return test, test
-        return api.gen_data([1, 2, 3, 4, 5], length, num_iter)
+        return api.gen_data([1, 2, 3, 4], length, num_iter)
 
     # runs = [opt, loss, preds, merge]
     def train_loop(self, inps, targs, runs, num_iter, num_report):
