@@ -38,16 +38,20 @@ def plot(indices, stock_name):
 
 # plot([1, 2, 3], 'WIKI/AAPL')
 
-stocks = ['WIKI/FB', 'WIKI/CSCO', 'WIKI/IBM', 'WIKI/GOOGL', 'WIKI/MSFT', 'WIKI/AMZN', 'WIKI/TWTR']
+stocks = ['WIKI/IBM', 'WIKI/CSCO', 'WIKI/FB', 'WIKI/GOOGL', 'WIKI/MSFT', 'WIKI/AMZN', 'WIKI/TWTR']
+
+def apply(table):
+    return lambda a: np.array([x if i == 0 else x/table[0][0][i] - 1 for i, x in enumerate(a[0])])
 
 # TODO: non overlap instead?
 def gen_data(indices, length, num_iter):
     np.random.shuffle(stocks)
-    for i in range(num_iter):
-        stock_name = stocks[i % len(stocks)]
-        table = all_fields(indices, stock_name).reshape(-1, 1)
-        table = np.apply_along_axis(lambda a: np.array([x for x in a[0]]), axis=1, arr=table)
-        inds = np.arange(0, table.shape[0] - length, length)
+    # for i in range(num_iter):
+    stock_name = stocks[0] # stocks[i % len(stocks)]
+    table = all_fields(indices, stock_name).reshape(-1, 1)
+    table = np.apply_along_axis(apply(table), axis=1, arr=table)
+    inds = np.arange(0, table.shape[0] - length, length)
+    for _ in range(num_iter):
         np.random.shuffle(inds)
         for ind in inds:
             yield table[ind: ind+length], table[ind+1: ind+length+1]

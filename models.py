@@ -18,7 +18,7 @@ class models:
         self.lstm_target_size = self.lstm_input_size
         self.lstm_output_size = 2 * self.lstm_units
         self.lstm_num_layers = 5
-        self.lstm_num_iter = 20000
+        self.lstm_num_iter = 50
         self.lstm_num_report = 500
 
         pass
