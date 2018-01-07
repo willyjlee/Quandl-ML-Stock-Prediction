@@ -31,6 +31,7 @@ def all_fields(indices, stock_name):
     return arr
 
 def plot(indices, stock_name):
+    print('plot: {}'.format(stock_name))
     table = all_fields(indices, stock_name)
     data = pandas.DataFrame.from_records(table)
     data.plot(x='Date', y=list(table.dtype.names)[1:], subplots=True)
@@ -41,24 +42,26 @@ def plot(indices, stock_name):
 stocks = ['WIKI/IBM', 'WIKI/CSCO', 'WIKI/FB', 'WIKI/GOOGL', 'WIKI/MSFT', 'WIKI/AMZN', 'WIKI/TWTR']
 
 def apply(table):
-    return lambda a: np.array([x if i == 0 else x/table[0][0][i] - 1 for i, x in enumerate(a[0])])
+    # try without norm
+    # return lambda a: np.array([x if i == 0 else x/table[0][0][i] - 1 for i, x in enumerate(a[0])])
+    return lambda a: np.array([x for i, x in enumerate(a[0])])
 
 # TODO: non overlap instead?
 def gen_data(indices, length, num_iter):
     np.random.shuffle(stocks)
-    # for i in range(num_iter):
-    stock_name = stocks[0] # stocks[i % len(stocks)]
+    stock_name = stocks[0]
     table = all_fields(indices, stock_name).reshape(-1, 1)
     table = np.apply_along_axis(apply(table), axis=1, arr=table)
-    # inds = np.arange(0, table.shape[0] - length, length)
     inds = np.arange(0, table.shape[0] - length + 1, length)
     m = max(inds)
     inds = np.array(list(filter(lambda n: n != m, inds)))
     for _ in range(num_iter):
         np.random.shuffle(inds)
         for ind in inds:
-            # yield table[ind: ind+length], table[ind+1: ind+length+1]
-            yield table[ind: ind+length], table[ind+length: ind+2*length]
+            in_t, out_t = np.copy(table[ind: ind+length]), np.copy(table[ind+length: ind+2*length])
+            # norm by in_t[0]
+            in_t[:, 1:], out_t[:, 1:] = in_t[:, 1:] / in_t[0, 1:] - 1, out_t[:, 1:] / in_t[0, 1:] - 1
+            yield in_t, out_t
 
 # TODO: add transforms?
 
