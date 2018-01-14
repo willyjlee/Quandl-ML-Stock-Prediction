@@ -18,7 +18,7 @@ class models:
         self.lstm_target_size = self.lstm_input_size
         self.lstm_output_size = 2 * self.lstm_units
         self.lstm_num_layers = 5
-        self.lstm_num_iter = 50
+        self.lstm_num_iter = 1
         self.lstm_num_report = 500
 
         pass
@@ -26,13 +26,35 @@ class models:
     def save_ckpt(self):
         pass
 
+    # runs = [preds, loss]
+    # predict on 1st only?
+    def predict(self, runs, length):
+        data = api.gen_data([1], length, 1, random=False)
+        sess = tf.InteractiveSession()
+        sess.run(tf.global_variables_initializer())
+        feed_dict = dict()
+
+        series = []
+        for x, _ in data:
+            x = np.delete(x, [0], axis=1)
+            x = np.reshape(x, (1, ) + x.shape)
+            feed_dict[tf.get_variable(name='inputs', shape=[self.batch_size, self.lstm_input_max_len, self.lstm_input_size])] = x
+            res = sess.run(runs, feed_dict=feed_dict)
+            print('Loss: {}'.format(res[1]))
+            np.reshape(res[0], res[0].shape[1:])
+            series.append(res[0])
+            # TODO: fix to graph.get_tensor_by_name()
+        graph = np.concatenate(tuple(series), axis=0)
+        print('preds graph made...')
+        print(graph.shape)
+
     # return (inps, targs) [batch_size, input_max_len, inp_size]
     # generator
     def get_data(self, num_iter, length):
         # TODO:
         # test = np.random.randint(0, 20, (self.batch_size, self.lstm_input_max_len, self.lstm_input_size))
         # return test, test
-        return api.gen_data([1, 2, 3, 4], length, num_iter)
+        return api.gen_data([1, 2, 3, 4], length, num_iter, 'WIKI/GOOGL')
 
     # runs = [opt, loss, preds, merge]
     def train_loop(self, inps, targs, runs, num_iter, num_report):
@@ -46,7 +68,6 @@ class models:
             # ignore date now
             x = np.delete(x, [0], axis=1)
             y = np.delete(y, [0], axis=1)
-            # TODO: reshape... batch = 1
             x = np.reshape(x, (1, ) + x.shape)
             y = np.reshape(y, (1, ) + y.shape)
 
@@ -84,8 +105,8 @@ class models:
         f_cell = [tf.nn.rnn_cell.BasicLSTMCell(self.lstm_units, state_is_tuple=True) for i in range(self.lstm_num_layers)]
         b_cell = [tf.nn.rnn_cell.BasicLSTMCell(self.lstm_units, state_is_tuple=True) for i in range(self.lstm_num_layers)]
 
-        inputs = tf.placeholder(tf.float32, shape=(self.batch_size, self.lstm_input_max_len, self.lstm_input_size))
-        targets = tf.placeholder(tf.float32, shape=(self.batch_size, self.lstm_input_max_len, self.lstm_target_size))
+        inputs = tf.placeholder(tf.float32, shape=(self.batch_size, self.lstm_input_max_len, self.lstm_input_size), name='inputs')
+        targets = tf.placeholder(tf.float32, shape=(self.batch_size, self.lstm_input_max_len, self.lstm_target_size), name='targets')
 
         outputs, output_state_fw, output_state_bw = tf.contrib.rnn.stack_bidirectional_dynamic_rnn(
             f_cell,
@@ -104,14 +125,14 @@ class models:
             self.var_summary(b)
 
         with tf.name_scope('preds'):
-            preds = tf.matmul(outputs, w) + b # [batch_size, input_max_len, target_size]
+            preds = tf.add(tf.matmul(outputs, w), b, name='preds') # [batch_size, input_max_len, target_size]
             self.var_summary(preds)
 
-        loss = tf.reduce_mean(tf.square(preds - targets))
+        loss = tf.reduce_mean(tf.square(preds - targets), name='loss')
         tf.summary.scalar('loss', loss)
 
         # apply gradient clipping here? "This is the correct way to perform gradient clipping" lol
-        opt = tf.train.AdamOptimizer(1e-2).minimize(loss)
+        opt = tf.train.AdamOptimizer(1e-2, name='opt').minimize(loss)
 
         merge = tf.summary.merge_all()
 
@@ -121,3 +142,5 @@ class models:
 
 x = models()
 x.stack_bidir_lstm_model()
+# need shapes?
+x.predict([tf.get_variable(name='preds'), tf.get_variable(name='loss')], 5)

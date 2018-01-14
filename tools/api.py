@@ -46,17 +46,16 @@ def apply(table):
     # return lambda a: np.array([x if i == 0 else x/table[0][0][i] - 1 for i, x in enumerate(a[0])])
     return lambda a: np.array([x for i, x in enumerate(a[0])])
 
-# TODO: non overlap instead?
-def gen_data(indices, length, num_iter):
-    np.random.shuffle(stocks)
-    stock_name = stocks[0]
+def gen_data(indices, length, num_iter, stock_name, random=True):
     table = all_fields(indices, stock_name).reshape(-1, 1)
     table = np.apply_along_axis(apply(table), axis=1, arr=table)
+    # TODO: use all inds instead?
     inds = np.arange(0, table.shape[0] - length + 1, length)
     m = max(inds)
     inds = np.array(list(filter(lambda n: n != m, inds)))
     for _ in range(num_iter):
-        np.random.shuffle(inds)
+        if random:
+            np.random.shuffle(inds)
         for ind in inds:
             in_t, out_t = np.copy(table[ind: ind+length]), np.copy(table[ind+length: ind+2*length])
             # norm by in_t[0]
@@ -67,9 +66,9 @@ def gen_data(indices, length, num_iter):
 
 # test
 if __name__ == '__main__':
-    for x, y in gen_data([1, 2], 5, 5):
+    for x, y in gen_data([1, 2], 5, 5, 'WIKI/GOOGL', random=False):
         print(x.shape)
         print('x: {}'.format(x))
         print('y: {}'.format(y))
         break
-    plot([1], stocks[0])
+    plot([1], 'WIKI/GOOGL')
