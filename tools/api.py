@@ -46,10 +46,13 @@ def apply(table):
     # return lambda a: np.array([x if i == 0 else x/table[0][0][i] - 1 for i, x in enumerate(a[0])])
     return lambda a: np.array([x for i, x in enumerate(a[0])])
 
-def gen_data(indices, length, num_iter, stock_name, random=True):
+def gen_data(indices, length, num_iter, stock_name, random=True, get_col_names=False):
     table = all_fields(indices, stock_name).reshape(-1, 1)
+    # get names
+    if get_col_names:
+        yield list(table.dtype.names)
     table = np.apply_along_axis(apply(table), axis=1, arr=table)
-    # TODO: use all inds instead?
+    # TODO: use variable size samples
     inds = np.arange(0, table.shape[0] - length + 1, length)
     m = max(inds)
     inds = np.array(list(filter(lambda n: n != m, inds)))

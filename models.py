@@ -2,6 +2,8 @@ import numpy as np
 import tensorflow as tf
 from tools import api
 import os
+import matplotlib.pyplot as plt
+import pandas
 
 # models
 class models:
@@ -28,25 +30,35 @@ class models:
 
     # runs = [preds, loss]
     # predict on 1st only?
+    # TODO: self.lstm_input_size = # features
     def predict(self, runs, length):
-        data = api.gen_data([1], length, 1, random=False)
+        data = api.gen_data([1, 2, 3, 4], length, 1, 'WIKI/GOOGL', random=False, get_col_names=True)
+        col_names = next(data)
         sess = tf.InteractiveSession()
         sess.run(tf.global_variables_initializer())
         feed_dict = dict()
-
         series = []
-        for x, _ in data:
+        for x, y in data:
+            # x = y = [5, 5]
             x = np.delete(x, [0], axis=1)
             x = np.reshape(x, (1, ) + x.shape)
-            feed_dict[tf.get_variable(name='inputs', shape=[self.batch_size, self.lstm_input_max_len, self.lstm_input_size])] = x
+            feed_dict[tf.get_default_graph().get_tensor_by_name('inputs:0')] = x
             res = sess.run(runs, feed_dict=feed_dict)
             print('Loss: {}'.format(res[1]))
             np.reshape(res[0], res[0].shape[1:])
-            series.append(res[0])
-            # TODO: fix to graph.get_tensor_by_name()
+            # add label dates
+            dates = np.reshape(y[:, 0], (-1, 1))
+            series.append(np.append(dates, res[0].squeeze(), axis=1))
         graph = np.concatenate(tuple(series), axis=0)
-        print('preds graph made...')
-        print(graph.shape)
+
+        # graph to recarray
+        graph = np.core.records.fromarrays(graph.transpose(), names=','.join(col_names))
+        print(graph)
+        #graphing graph
+        data = pandas.DataFrame.from_records(graph)
+        print(col_names)
+        data.plot(x=col_names[0], y=col_names[1], subplots=True)
+        plt.show()
 
     # return (inps, targs) [batch_size, input_max_len, inp_size]
     # generator
@@ -97,7 +109,7 @@ class models:
             tf.summary.histogram('histogram', var)
 
     # try with continuous data (not 'inc', 'dec', 'balanced', etc)
-    def stack_bidir_lstm_model(self):
+    def stack_bidir_lstm_model(self, train=True):
 
         # lstm_input_size = [# of transformations (rdiff, etc.)]
         tf.reset_default_graph()
@@ -136,11 +148,13 @@ class models:
 
         merge = tf.summary.merge_all()
 
-        self.train_loop(inputs, targets, [opt, loss, preds, merge], self.lstm_num_iter, self.lstm_num_report)
+        if train:
+            self.train_loop(inputs, targets, [opt, loss, preds, merge], self.lstm_num_iter, self.lstm_num_report)
 
     # TODO: cnn & seq2seq (with attention & news sentiment)
 
 x = models()
-x.stack_bidir_lstm_model()
+x.stack_bidir_lstm_model(train=False)
 # need shapes?
-x.predict([tf.get_variable(name='preds'), tf.get_variable(name='loss')], 5)
+x.predict([tf.get_variable(name='preds', shape=[x.batch_size, x.lstm_input_max_len, x.lstm_target_size]),
+           tf.get_variable(name='loss', shape=[])], 5)
