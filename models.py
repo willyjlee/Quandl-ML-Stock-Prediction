@@ -58,6 +58,7 @@ class models:
         data = pandas.DataFrame.from_records(graph)
         print(col_names)
         data.plot(x=col_names[0], y=col_names[1], subplots=True)
+        plt.savefig('graph.png')
         plt.show()
 
     # return (inps, targs) [batch_size, input_max_len, inp_size]
